@@ -1,13 +1,8 @@
 let currentUser = null;
 let queueInterval = null;
 
-const API_URL = "https://duel-profile-wasted.onrender.com"; // Без слэша на конце!
-
-// Все fetch-запросы должны выглядеть примерно так:
-let response = await fetch(`${API_URL}/api/auth`, { ... });
-let res = await fetch(`${API_URL}/api/users`);
-let fightRes = await fetch(`${API_URL}/api/duel/fight`, { ... });
-// И так далее для всех остальных запросов на сервер (/api/shop/buy, /api/cases/open, /api/gifts/sell и т.д.)
+// Твой рабочий сервер в облаке Render
+const API_URL = "https://duel-profile-wasted.onrender.com";
 
 function showToast(text) {
     let toast = document.getElementById('toast');
@@ -26,7 +21,7 @@ window.onload = async function() {
             const playerName = player.getName() || "Яндекс Игрок";
             const playerPhoto = player.getPhoto('medium') || "https://i.imgur.com/6VBx3io.png";
 
-            let response = await fetch('/api/auth-yandex', {
+            let response = await fetch(`${API_URL}/api/auth-yandex`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ yandexId, username: playerName, avatar: playerPhoto })
@@ -69,7 +64,7 @@ async function handleAuth() {
         return;
     }
 
-    let response = await fetch('/api/auth', {
+    let response = await fetch(`${API_URL}/api/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -137,7 +132,7 @@ async function saveProfile() {
     currentUser.avatar = newAvatar;
     currentUser.bio = newBio;
 
-    await fetch('/api/profile/update', {
+    await fetch(`${API_URL}/api/profile/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: currentUser.username, avatar: newAvatar, bio: newBio })
@@ -154,7 +149,7 @@ async function buyShopItem(name, price, rarity) {
         return;
     }
 
-    let res = await fetch('/api/shop/buy', {
+    let res = await fetch(`${API_URL}/api/shop/buy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: currentUser.username, name, price, rarity })
@@ -178,7 +173,7 @@ async function openCase(cost) {
         return;
     }
 
-    let res = await fetch('/api/cases/open', {
+    let res = await fetch(`${API_URL}/api/cases/open`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: currentUser.username, cost })
@@ -257,7 +252,7 @@ function renderInventory() {
 }
 
 async function sellGift(index) {
-    let res = await fetch('/api/gifts/sell', {
+    let res = await fetch(`${API_URL}/api/gifts/sell`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: currentUser.username, itemIndex: index })
@@ -279,7 +274,7 @@ async function adminGiveCoins() {
     let target = document.getElementById('admin-target-user').value.trim();
     let amount = parseInt(document.getElementById('admin-coins-amount').value);
 
-    let res = await fetch('/api/admin/give-coins', {
+    let res = await fetch(`${API_URL}/api/admin/give-coins`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ adminUsername: currentUser.username, targetUsername: target, amount })
@@ -309,7 +304,7 @@ function toggleMatchmaking() {
         showToast("🔍 Поиск соперника...");
         
         queueInterval = setInterval(async () => {
-            let res = await fetch('/api/users');
+            let res = await fetch(`${API_URL}/api/users`);
             let users = await res.json();
             let opponents = users.filter(u => u.username !== currentUser.username);
             if (opponents.length > 0) {
@@ -328,7 +323,7 @@ function toggleMatchmaking() {
 }
 
 async function joinRandomDuel() {
-    let res = await fetch('/api/users');
+    let res = await fetch(`${API_URL}/api/users`);
     let users = await res.json();
     let opponents = users.filter(u => u.username !== currentUser.username);
 
@@ -344,7 +339,7 @@ async function sendDirectChallenge() {
     let target = document.getElementById('target-username').value.trim();
     if (!target) return showToast("⚠️ Введи ник!");
 
-    let res = await fetch('/api/challenge/send', {
+    let res = await fetch(`${API_URL}/api/challenge/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ from: currentUser.username, target })
@@ -359,7 +354,7 @@ function startChallengesPolling() {
 }
 
 async function loadChallenges() {
-    let res = await fetch(`/api/challenges/${currentUser.username}`);
+    let res = await fetch(`${API_URL}/api/challenges/${currentUser.username}`);
     let challenges = await res.json();
 
     let container = document.getElementById('challenges-list');
@@ -391,10 +386,10 @@ async function loadChallenges() {
 }
 
 async function acceptChallenge(challenger, index) {
-    let res = await fetch(`/api/challenges/${currentUser.username}`);
+    let res = await fetch(`${API_URL}/api/challenges/${currentUser.username}`);
     let challenges = await res.json();
     challenges.splice(index, 1);
-    await fetch('/api/challenge/clear', {
+    await fetch(`${API_URL}/api/challenge/clear`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: currentUser.username, challenges })
@@ -403,10 +398,10 @@ async function acceptChallenge(challenger, index) {
 }
 
 async function declineChallenge(index) {
-    let res = await fetch(`/api/challenges/${currentUser.username}`);
+    let res = await fetch(`${API_URL}/api/challenges/${currentUser.username}`);
     let challenges = await res.json();
     challenges.splice(index, 1);
-    await fetch('/api/challenge/clear', {
+    await fetch(`${API_URL}/api/challenge/clear`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: currentUser.username, challenges })
@@ -417,7 +412,7 @@ async function declineChallenge(index) {
 async function runServerDuel(p1Name, p2Name) {
     document.getElementById('active-arena').classList.remove('hidden');
     
-    let res = await fetch('/api/users');
+    let res = await fetch(`${API_URL}/api/users`);
     let users = await res.json();
     let u1 = users.find(u => u.username === p1Name) || { username: p1Name, avatar: 'https://i.imgur.com/6VBx3io.png' };
     let u2 = users.find(u => u.username === p2Name) || { username: p2Name, avatar: 'https://i.imgur.com/6VBx3io.png' };
@@ -428,7 +423,7 @@ async function runServerDuel(p1Name, p2Name) {
     document.getElementById('f2-name').innerText = u2.username;
     document.getElementById('duel-result-text').innerText = "🔍 Расчет силы бойцов...";
 
-    let fightRes = await fetch('/api/duel/fight', {
+    let fightRes = await fetch(`${API_URL}/api/duel/fight`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ p1: p1Name, p2: p2Name })
@@ -456,7 +451,7 @@ async function runServerDuel(p1Name, p2Name) {
             updateInterface();
             showToast("🎉 Победа! +10 Coins!");
         } else {
-            fetch('/api/users').then(r => r.json()).then(allUsers => {
+            fetch(`${API_URL}/api/users`).then(r => r.json()).then(allUsers => {
                 let me = allUsers.find(u => u.username === currentUser.username);
                 if (me) {
                     currentUser.coins = me.coins;
@@ -471,7 +466,7 @@ async function runServerDuel(p1Name, p2Name) {
 }
 
 async function loadLeaderboard() {
-    let res = await fetch('/api/users');
+    let res = await fetch(`${API_URL}/api/users`);
     let users = await res.json();
     let tbody = document.getElementById('leaderboard-tbody');
     if (!tbody) return;
@@ -486,18 +481,18 @@ async function loadLeaderboard() {
 }
 
 async function loadPlayersGrid() {
-    let res = await fetch('/api/users');
+    let res = await fetch(`${API_URL}/api/users`);
     let users = await res.json();
     let grid = document.getElementById('all-players-grid');
     if (!grid) return;
     grid.innerHTML = "";
 
     users.forEach(u => {
-        let card = document.createElement('div');
-        card.className = 'player-card';
-        card.onclick = () => viewProfile(u);
-        card.innerHTML = `<img src="${u.avatar}"><div><h4>${u.username}</h4><p>🏆 ${u.wins} | 💰 ${u.coins}</p></div>`;
-        grid.appendChild(card);
+        let gridCard = document.createElement('div');
+        gridCard.className = 'player-card';
+        gridCard.onclick = () => viewProfile(u);
+        gridCard.innerHTML = `<img src="${u.avatar}"><div><h4>${u.username}</h4><p>🏆 ${u.wins} | 💰 ${u.coins}</p></div>`;
+        grid.appendChild(gridCard);
     });
 }
 
