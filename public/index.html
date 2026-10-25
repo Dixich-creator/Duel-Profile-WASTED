@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Duel: WASTED</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- СКРИПТ ЯНДЕКС ИГР SDK -->
+    <script src="https://yandex.ru/games/sdk/v2"></script>
+</head>
+<body>
+
+    <div id="toast" class="toast hidden">Уведомление</div>
+
+    <!-- ЭКРАН АВТОРИЗАЦИИ И РЕГИСТРАЦИИ -->
+    <div id="auth-screen" class="screen center-screen">
+        <div class="card auth-card">
+            <h1>⚔️ Profile Duel <span class="tag">Yandex / PC</span></h1>
+            <p>Вход по логину или через Яндекс Игры</p>
+            <input type="text" id="auth-username" placeholder="Твой никнейм">
+            <input type="password" id="auth-password" placeholder="Пароль">
+            <button class="btn-primary" onclick="handleAuth()">Войти / Регистрация</button>
+        </div>
+    </div>
+
+    <!-- ГЛАВНЫЙ ИНТЕРФЕЙС -->
+    <div id="main-app" class="app-layout hidden">
+        
+        <aside class="sidebar">
+            <div class="sidebar-user">
+                <img id="menu-avatar" src="" alt="Аватар">
+                <div>
+                    <h3 id="menu-username">Игрок</h3>
+                    <p class="balance-text">💰 <span id="menu-coins">100</span> Coins</p>
+                    <p class="wins-text">🏆 Побед: <span id="menu-wins">0</span></p>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-btn active" onclick="switchTab('duel', this)">⚔️ Арена Дуэлей</button>
+                <button class="nav-btn" onclick="switchTab('challenges', this)">📩 Вызовы <span id="pending-badge" class="badge hidden">0</span></button>
+                <button class="nav-btn" onclick="switchTab('profile', this)">👤 Мой Профиль</button>
+                <button class="nav-btn" onclick="switchTab('shop', this)">🎁 Магазин Подарков</button>
+                <button class="nav-btn" onclick="switchTab('cases', this)">🎁 Кейсы и Рулетка</button>
+                <button class="nav-btn" onclick="switchTab('leaderboard', this)">🏆 Таблица Лидеров</button>
+                <button class="nav-btn" onclick="switchTab('players', this)">👥 База Игроков</button>
+                <button class="nav-btn admin-btn hidden" id="admin-menu-btn" onclick="switchTab('admin', this)">🛡️ Админ-панель</button>
+            </nav>
+
+            <button class="btn-secondary logout-btn" onclick="logout()">Сменить профиль</button>
+        </aside>
+
+        <main class="content-area">
+            
+            <!-- АРЕНА ДУЭЛЕЙ -->
+            <div id="tab-duel" class="tab-content">
+                <div class="panel">
+                    <h2>⚔️ РЕАЛЬНЫЕ ДУЭЛИ МЕЖДУ ИГРОКАМИ</h2>
+                    <p class="subtitle">Сила бойца рассчитывается по победам, монетам и инвентарю!</p>
+                    
+                    <div class="duel-mode-box">
+                        <div class="mode-card">
+                            <h3>🔍 Поиск дуэли</h3>
+                            <p>Встать в очередь поиска случайного соперника</p>
+                            <button class="btn-primary" id="matchmaking-btn" onclick="toggleMatchmaking()">Встать в очередь</button>
+                        </div>
+                        
+                        <div class="mode-card">
+                            <h3>⚡ Вступить в дуэль</h3>
+                            <p>Мгновенно найти случайного игрока для боя</p>
+                            <button class="btn-primary" onclick="joinRandomDuel()">Найти соперника</button>
+                        </div>
+
+                        <div class="mode-card full-width">
+                            <h3>🎯 Вызвать на дуэль игрока</h3>
+                            <p>Введи точный ник пользователя для прямого вызова</p>
+                            <div class="inline-group">
+                                <input type="text" id="target-username" placeholder="Ник игрока...">
+                                <button class="btn-primary" onclick="sendDirectChallenge()">Вызвать</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="active-arena" class="active-arena hidden">
+                        <h3>⚡ РЕЗУЛЬТАТЫ СРАЖЕНИЯ</h3>
+                        <div class="duel-arena">
+                            <div class="fighter" id="fighter-1">
+                                <img id="f1-img" src="">
+                                <h3 id="f1-name">Игрок 1</h3>
+                                <p id="f1-score" class="score-badge">Сила: --</p>
+                                <div id="f1-wasted" class="wasted-badge hidden">WASTED</div>
+                            </div>
+                            <div class="vs-badge">VS</div>
+                            <div class="fighter" id="fighter-2">
+                                <img id="f2-img" src="">
+                                <h3 id="f2-name">Игрок 2</h3>
+                                <p id="f2-score" class="score-badge">Сила: --</p>
+                                <div id="f2-wasted" class="wasted-badge hidden">WASTED</div>
+                            </div>
+                        </div>
+                        <div id="duel-result-text" class="result-msg">Идет расчет...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВЫЗОВЫ -->
+            <div id="tab-challenges" class="tab-content hidden">
+                <div class="panel">
+                    <h2>📩 Входящие вызовы</h2>
+                    <div id="challenges-list" class="challenges-container">
+                        <p class="empty-text">Нет активных вызовов</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПРОФИЛЬ -->
+            <div id="tab-profile" class="tab-content hidden">
+                <div class="panel">
+                    <h2>👤 Мой Профиль и Инвентарь</h2>
+                    <div class="profile-grid">
+                        <div class="avatar-box">
+                            <img id="profile-preview-avatar" src="" alt="Аватар">
+                            <label class="file-upload-label">
+                                Ссылка на аватар (URL)
+                                <input type="text" id="avatar-url-input" placeholder="https://..." style="margin-top: 5px; padding: 6px;">
+                            </label>
+                        </div>
+                        <div class="bio-box">
+                            <label>Описание профиля (Bio):</label>
+                            <textarea id="profile-bio" placeholder="Расскажи о себе..."></textarea>
+                            <button class="btn-primary" onclick="saveProfile()">Сохранить изменения</button>
+                        </div>
+                    </div>
+
+                    <div class="gifts-section" style="margin-top: 30px;">
+                        <h3>🎒 Твой инвентарь подарков:</h3>
+                        <div id="my-inventory-grid" class="inventory-grid">
+                            <p class="empty-text">Инвентарь пуст</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- МАГАЗИН -->
+            <div id="tab-shop" class="tab-content hidden">
+                <div class="panel">
+                    <h2>🎁 Магазин Подарков</h2>
+                    <div class="shop-grid">
+                        <div class="shop-item">
+                            <span class="shop-icon">🌹</span>
+                            <h4>Роза</h4>
+                            <p class="price">15 Coins</p>
+                            <button class="btn-primary" onclick="buyShopItem('🌹 Роза', 15, 'common')">Купить</button>
+                        </div>
+                        <div class="shop-item">
+                            <span class="shop-icon">☕</span>
+                            <h4>Кофе</h4>
+                            <p class="price">50 Coins</p>
+                            <button class="btn-primary" onclick="buyShopItem('☕ Кофе', 50, 'common')">Купить</button>
+                        </div>
+                        <div class="shop-item">
+                            <span class="shop-icon">⭐</span>
+                            <h4>Звезда</h4>
+                            <p class="price">150 Coins</p>
+                            <button class="btn-primary" onclick="buyShopItem('⭐ Звезда', 150, 'rare')">Купить</button>
+                        </div>
+                        <div class="shop-item">
+                            <span class="shop-icon">🎮</span>
+                            <h4>Геймпад</h4>
+                            <p class="price">350 Coins</p>
+                            <button class="btn-primary" onclick="buyShopItem('🎮 Геймпад', 350, 'rare')">Купить</button>
+                        </div>
+                        <div class="shop-item">
+                            <span class="shop-icon">💎</span>
+                            <h4>Бриллиант</h4>
+                            <p class="price">1,000 Coins</p>
+                            <button class="btn-primary" onclick="buyShopItem('💎 Бриллиант', 1000, 'epic')">Купить</button>
+                        </div>
+                        <div class="shop-item">
+                            <span class="shop-icon">👑</span>
+                            <h4>Корона</h4>
+                            <p class="price">3,500 Coins</p>
+                            <button class="btn-primary" onclick="buyShopItem('👑 Корона', 3500, 'epic')">Купить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- КЕЙСЫ И РУЛЕТКА -->
+            <div id="tab-cases" class="tab-content hidden">
+                <div class="panel">
+                    <h2>🎁 Кейсы с подарками (0 - 10,000 Звёзд)</h2>
+                    
+                    <div class="cases-grid">
+                        <div class="case-card" onclick="openCase(100)">
+                            <div class="case-icon">🎁</div>
+                            <h3>Стандартный кейс</h3>
+                            <p class="price">100 Coins</p>
+                            <button class="btn-primary" style="margin-top: 10px;">Открыть</button>
+                        </div>
+                        <div class="case-card" onclick="openCase(500)">
+                            <div class="case-icon">💎</div>
+                            <h3>Элитный кейс</h3>
+                            <p class="price">500 Coins</p>
+                            <button class="btn-primary" style="margin-top: 10px; background: #9b59b6;">Открыть</button>
+                        </div>
+                    </div>
+
+                    <div id="case-animation-box" class="case-modal hidden">
+                        <h3>🎰 Открытие кейса...</h3>
+                        <div class="roulette-track" id="roulette-track"></div>
+                        <div id="case-result-msg" style="font-size: 18px; font-weight: bold; color: #f1c40f; margin-top: 15px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ТАБЛИЦА ЛИДЕРОВ -->
+            <div id="tab-leaderboard" class="tab-content hidden">
+                <div class="panel">
+                    <h2>🏆 Таблица Лидеров</h2>
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Игрок</th>
+                                <th>Победы</th>
+                                <th>Монеты</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- БАЗА ИГРОКОВ -->
+            <div id="tab-players" class="tab-content hidden">
+                <div class="panel">
+                    <h2>👥 База Игроков</h2>
+                    <div id="all-players-grid" class="players-grid"></div>
+                </div>
+            </div>
+
+            <!-- АДМИН-ПАНЕЛЬ -->
+            <div id="tab-admin" class="tab-content hidden">
+                <div class="panel admin-panel-box">
+                    <h2>🛡️ Секретная Админ-панель (Dev)</h2>
+                    <div class="mode-card full-width" style="border-color: #e74c3c;">
+                        <h3>💰 Выдать Coins игроку</h3>
+                        <input type="text" id="admin-target-user" placeholder="Ник игрока...">
+                        <input type="number" id="admin-coins-amount" value="1000">
+                        <button class="btn-primary" style="background: #e74c3c; margin-top: 10px;" onclick="adminGiveCoins()">Выдать монеты</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПРОСМОТР ЧУЖОГО ПРОФИЛЯ -->
+            <div id="tab-user-profile" class="tab-content hidden">
+                <div class="panel">
+                    <button class="btn-secondary" style="width: auto; margin-bottom: 20px;" onclick="switchTab('leaderboard', null)">← Назад</button>
+                    <div class="view-profile-card">
+                        <img id="view-avatar" src="" class="view-avatar">
+                        <h2 id="view-username">Имя</h2>
+                        <p class="view-stats">🏆 Побед: <span id="view-wins">0</span> | 💰 Монет: <span id="view-coins">0</span></p>
+                        <div class="view-section">
+                            <h4>Описание (Bio):</h4>
+                            <p id="view-bio" class="view-box-text">-</p>
+                        </div>
+                        <div class="view-section" style="margin-top: 20px;">
+                            <h4>Инвентарь игрока:</h4>
+                            <div id="view-inventory-grid" class="inventory-grid"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
