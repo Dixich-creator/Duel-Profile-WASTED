@@ -1,6 +1,14 @@
 let currentUser = null;
 let queueInterval = null;
 
+const API_URL = "https://duel-profile-wasted.onrender.com"; // Без слэша на конце!
+
+// Все fetch-запросы должны выглядеть примерно так:
+let response = await fetch(`${API_URL}/api/auth`, { ... });
+let res = await fetch(`${API_URL}/api/users`);
+let fightRes = await fetch(`${API_URL}/api/duel/fight`, { ... });
+// И так далее для всех остальных запросов на сервер (/api/shop/buy, /api/cases/open, /api/gifts/sell и т.д.)
+
 function showToast(text) {
     let toast = document.getElementById('toast');
     toast.innerText = text;
